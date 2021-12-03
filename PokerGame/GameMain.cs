@@ -48,23 +48,16 @@ namespace PokerGame
             }
 
         }
+    
         public static Power GetStrongestPower(List<Card> handCards,List<Card> tableCards)
         {
             List<Card> comboCards = new List<Card>();
             comboCards.AddRange(handCards);
             comboCards.AddRange(tableCards);
-
-            List<Card>[] cardsByValue = new List<Card>[15];
-            for(int i = 0;i < cardsByValue.Length;i++)
-            {
-                cardsByValue[i] = new List<Card>();
-            }
-            List<Card>[] cardsByFamily = new List<Card>[4];
-            for (int i = 0; i < cardsByFamily.Length; i++)
-            {
-                cardsByFamily[i] = new List<Card>();
-            }
-
+           
+            List<Card>[] cardsSortedAndStackedByValue = CreatEmptyArrayOfLists(15);
+            List<Card>[] cardsSortedAndStackedByFamilly = CreatEmptyArrayOfLists(4);
+            
             comboCards.Sort(delegate (Card card1, Card card2){
             int compare = card1.value.CompareTo(card2.value);
             if (compare == 0)
@@ -73,30 +66,15 @@ namespace PokerGame
             }
             return compare;
             });
-           // Console.WriteLine("***********comboCards");
-           // LogCardInfo(comboCards);
-            foreach(Card c in comboCards)
-            {
-                if(c.value==ACE_VALUE)
-                {
-                    cardsByValue[1].Add(c);
-                }
-                cardsByValue[c.value].Add(c);
-                cardsByFamily[(int)c.familly].Add(c);
-            }
-            Power flushPower = GetFlushPower(cardsByFamily);
-            Power straightPower = GetStraightPower(cardsByValue);
-            Power pairPower = GetPairsPower(cardsByValue);
-          //  Console.WriteLine("************************************************");
-          //  if(flushPower!=null)
-          //  Console.WriteLine("flushPower" + flushPower.comb);
-          //  if (straightPower != null)
-          //  Console.WriteLine("straightPower" + straightPower.comb);
-          //  Console.WriteLine("pairPower" + pairPower.comb);
-          //  Console.WriteLine("************************************************");
+            StackCardsByFamillyAndValue(comboCards, cardsSortedAndStackedByValue, cardsSortedAndStackedByFamilly);
+           
 
+            Power flushPower = GetFlushPower(cardsSortedAndStackedByFamilly);
+            Power straightPower = GetStraightPower(cardsSortedAndStackedByValue);
+            Power sameCardPower = GetSameCardPower(cardsSortedAndStackedByValue);
 
-            if (straightPower!=null&& flushPower!=null)
+            //filter strongest power
+            if ((straightPower!=null)&&(flushPower!=null))
             {
                 Power finalPower = null;
                 if (straightPower.getLastMain().value== ACE_VALUE)
@@ -113,14 +91,14 @@ namespace PokerGame
                 }
             }
             else
-            if(pairPower!=null&&pairPower.comb == Power.eCombinationType.FourOfAkind)
+            if(sameCardPower!=null&&sameCardPower.comb==Power.eCombinationType.FourOfAkind)
             {
-                return pairPower;
+                return sameCardPower;
             }
             else
-            if (pairPower != null && pairPower.comb == Power.eCombinationType.FullHouse)
+            if (sameCardPower != null && sameCardPower.comb == Power.eCombinationType.FullHouse)
             {
-                return pairPower;
+                return sameCardPower;
             }
             else
             if(flushPower != null)
@@ -132,8 +110,7 @@ namespace PokerGame
             {
                 return straightPower;
             }
-            
-            return pairPower;
+            return sameCardPower;
         }
         static Power GetFlushPower(List<Card>[] structuredAndOrderedCards)
         {
@@ -167,7 +144,7 @@ namespace PokerGame
             }
             return null;
         }
-        static Power GetPairsPower(List<Card>[] structuredAndOrderedCards)
+        static Power GetSameCardPower(List<Card>[] structuredAndOrderedCards)
         {
             List<Card> quadruples = new List<Card>();
             List<Card> triples = new List<Card>();
@@ -242,8 +219,7 @@ namespace PokerGame
             }
             mainCards.Add(kickerCards[kickerCards.Count - 1]);
             return new Power(mainCards, kickerCards, Power.eCombinationType.HighCard);
-        }
-        
+        }  
         public static void LogCardInfo(List<Card> cards)
         {
             foreach(Card c in cards)
@@ -251,6 +227,26 @@ namespace PokerGame
                 c.LogInfo();
             }
         }
-        
+        static List<Card>[] CreatEmptyArrayOfLists(int size)
+        {
+            List<Card>[] cardsByValue = new List<Card>[size];
+            for (int i = 0; i < cardsByValue.Length; i++)
+            {
+                cardsByValue[i] = new List<Card>();
+            }
+            return cardsByValue;
+        }
+        static void StackCardsByFamillyAndValue(List<Card> cards, List<Card>[] cardsSortedAndStackedByValue, List<Card>[] cardsSortedAndStackedByFamilly)
+        {
+            foreach (Card c in cards)
+            {
+                if (c.value == ACE_VALUE)//the ace has two value's.in termes of ordering
+                {
+                    cardsSortedAndStackedByValue[1].Add(c);
+                }
+                cardsSortedAndStackedByValue[c.value].Add(c);
+                cardsSortedAndStackedByFamilly[(int)c.familly].Add(c);
+            }
+        }
     }
 }
